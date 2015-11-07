@@ -120,7 +120,7 @@ RCT_EXPORT_VIEW_PROPERTY(onZoomChanged, BOOL)
   if ((self = [super init])) {
 
     self.session = [AVCaptureSession new];
-    self.session.sessionPreset = AVCaptureSessionPresetHigh;
+    self.session.sessionPreset = AVCaptureSessionPresetMedium;
 
     self.previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:self.session];
     self.previewLayer.needsDisplayOnBoundsChange = YES;
@@ -240,12 +240,12 @@ RCT_EXPORT_METHOD(stopCapture) {
 #if TARGET_IPHONE_SIMULATOR
   return;
 #endif
-	
+
   dispatch_async(self.sessionQueue, ^{
     if (self.presetCamera == AVCaptureDevicePositionUnspecified) {
       self.presetCamera = AVCaptureDevicePositionBack;
     }
-    
+
     AVCaptureStillImageOutput *stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
     if ([self.session canAddOutput:stillImageOutput])
     {
@@ -253,14 +253,14 @@ RCT_EXPORT_METHOD(stopCapture) {
       [self.session addOutput:stillImageOutput];
       self.stillImageOutput = stillImageOutput;
     }
-    
+
     AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
     if ([self.session canAddOutput:movieFileOutput])
     {
       [self.session addOutput:movieFileOutput];
       self.movieFileOutput = movieFileOutput;
     }
-    
+
     AVCaptureMetadataOutput *metadataOutput = [[AVCaptureMetadataOutput alloc] init];
     if ([self.session canAddOutput:metadataOutput]) {
       [metadataOutput setMetadataObjectsDelegate:self queue:self.sessionQueue];
@@ -268,7 +268,7 @@ RCT_EXPORT_METHOD(stopCapture) {
       [metadataOutput setMetadataObjectTypes:metadataOutput.availableMetadataObjectTypes];
       self.metadataOutput = metadataOutput;
     }
-    
+
     __weak RCTCameraManager *weakSelf = self;
     [self setRuntimeErrorHandlingObserver:[NSNotificationCenter.defaultCenter addObserverForName:AVCaptureSessionRuntimeErrorNotification object:self.session queue:nil usingBlock:^(NSNotification *note) {
       RCTCameraManager *strongSelf = weakSelf;
@@ -277,7 +277,7 @@ RCT_EXPORT_METHOD(stopCapture) {
         [strongSelf.session startRunning];
       });
     }]];
-    
+
     [self.session startRunning];
   });
 }
@@ -286,7 +286,7 @@ RCT_EXPORT_METHOD(stopCapture) {
 #if TARGET_IPHONE_SIMULATOR
   return;
 #endif
-	
+
   dispatch_async(self.sessionQueue, ^{
     self.camera = nil;
     [self.previewLayer removeFromSuperlayer];
@@ -294,7 +294,7 @@ RCT_EXPORT_METHOD(stopCapture) {
     for(AVCaptureInput *input in self.session.inputs) {
       [self.session removeInput:input];
     }
-    
+
     for(AVCaptureOutput *output in self.session.outputs) {
       [self.session removeOutput:output];
     }
@@ -303,19 +303,19 @@ RCT_EXPORT_METHOD(stopCapture) {
 
 - (void)initializeCaptureSessionInput:(NSString *)type {
   dispatch_async(self.sessionQueue, ^{
-    
+
     [self.session beginConfiguration];
-    
+
     NSError *error = nil;
     AVCaptureDevice *captureDevice;
-    
+
     if (type == AVMediaTypeAudio) {
       captureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     }
     else if (type == AVMediaTypeVideo) {
       captureDevice = [self deviceWithMediaType:AVMediaTypeVideo preferringPosition:self.presetCamera];
     }
-    
+
     if (captureDevice == nil) {
       return;
     }
